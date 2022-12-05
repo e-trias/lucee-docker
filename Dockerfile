@@ -98,13 +98,20 @@ RUN if [ "$LUCEE_ADMIN_PASSWORD" != "" ] ; then \
 
 WORKDIR ${BASE_DIR}
 
+# INSTALL CFSPREADSHEET (from https://github.com/jamiejackson/lucee5-install-extensions)
+# COPY warmup_extension.sh ./tmp/
+# RUN chmod a+x ./tmp/warmup_extension.sh
+RUN echo "~=%# install cfspreadsheet extension #%=~" \
+  && cd ${CATALINA_BASE}/lucee-server/deploy && { curl -O https://raw.githubusercontent.com/Leftbower/cfspreadsheet-lucee-5/master/cfspreadsheet-lucee-5.lex ; cd -; }
+  # && ./tmp/warmup_extension.sh server '037A27FF-0B80-4CBA-B954BEBD790B460E'
+
 RUN if [ "$LUCEE_VERSION" \> "5.3.6" ] || [ "$LUCEE_VERSION" == "CUSTOM" ] ; then \
-        echo "Enabled LUCEE_ENABLE_WARMUP" \
+      echo "Enabled LUCEE_ENABLE_WARMUP" \
         && export LUCEE_ENABLE_WARMUP=true \
         && export LUCEE_EXTENSIONS \
         && catalina.sh run ; \
     else \
-        echo "Start Tomcat and wait 20 seconds to shut down" \
+      echo "Start Tomcat and wait 20 seconds to shut down" \
         && catalina.sh start \
         && sleep 20 \
         && catalina.sh stop ; \
