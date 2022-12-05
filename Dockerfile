@@ -1,5 +1,5 @@
-### 
-## Build: 
+###
+## Build:
 #
 #  if passing LUCEE_VERSION, it must include modifier, e.g. -SNAPSHOT, -RC, if there is one
 #     you can also set the value to CUSTOM and place a Lucee JAR file in resources/catalina-base/lib
@@ -13,7 +13,7 @@
 #
 #  docker push isapir/lucee-538
 #
-### 
+###
 ## Run:
 #
 #  HOST_WEBROOT=/work/webroot
@@ -50,14 +50,16 @@ ARG CATALINA_OPTS=
 
 # Allow to set a custom webroot directory
 ARG SERVER_WEBROOT=/srv/www/app/webroot
+ARG SERVER_PORT=8080
 
 # Set Target Env for post warmup file copy, default is DEV - files will be copied from resources/target-envs/DEV
 ARG TARGET_ENV=DEV
 
 
 ENV LUCEE_EXTENSIONS=${LUCEE_EXTENSIONS}
-ENV CATALINA_OPTS=${CATALINA_OPTS}
 ENV SERVER_WEBROOT=${SERVER_WEBROOT}
+ENV SERVER_PORT=${SERVER_PORT}
+ENV CATALINA_OPTS=${CATALINA_OPTS}
 
 ENV BASE_DIR /srv/www
 
@@ -74,7 +76,7 @@ ENV LUCEE_SERVER ${CATALINA_BASE}/lucee-server
 ENV TARGET_ENV ${TARGET_ENV}
 
 # displays the OS version and Lucee Server path
-# calls makebase.sh and downloads Lucee if the version is not set to CUSTOM 
+# calls makebase.sh and downloads Lucee if the version is not set to CUSTOM
 RUN cat /etc/os-release \
     && $CATALINA_HOME/bin/makebase.sh $CATALINA_BASE \
     &&  if [ "$LUCEE_VERSION" != "CUSTOM" ] ; then \
@@ -90,7 +92,7 @@ COPY app ${WEBAPP_BASE}
 
 # create password.txt file if password is set
 RUN if [ "$LUCEE_ADMIN_PASSWORD" != "" ] ; then \
-        mkdir -p "${LUCEE_SERVER}/context" \ 
+        mkdir -p "${LUCEE_SERVER}/context" \
         && echo $LUCEE_ADMIN_PASSWORD > "${LUCEE_SERVER}/context/password.txt" ; \
     fi
 

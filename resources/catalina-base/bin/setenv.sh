@@ -10,6 +10,7 @@ CATALINA_OPTS="${CATALINA_OPTS} -javaagent:${CATALINA_BASE}/lib/lucee-external-a
 
 # set Tomcat webroot via server.xml Service/Engine/Host/Context#docBase
 CATALINA_OPTS="${CATALINA_OPTS} -Dserver.webroot=${SERVER_WEBROOT}"
+CATALINA_OPTS="${CATALINA_OPTS} -Dserver.port=${SERVER_PORT}"
 
 CATALINA_OPTS="${CATALINA_OPTS} -Dlucee.preserve.case=true"
 
