@@ -69,6 +69,7 @@
     <Connector port="${server.port}" protocol="HTTP/1.1"
                maxHttpHeaderSize="65536"
                connectionTimeout="20000"
+               bufferSize="1024"
                redirectPort="8443" />
     <!-- A "Connector" using the shared thread pool-->
     <!--
