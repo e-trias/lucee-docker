@@ -72,7 +72,7 @@ ENV BASE_DIR /srv/www
 ENV CATALINA_BASE ${BASE_DIR}/catalina-base
 ENV CATALINA_HOME /usr/local/tomcat
 ENV WEBAPP_BASE ${BASE_DIR}/app
-ENV LUCEE_DOWNLOAD http://release.lucee.org/rest/update/provider/loader/
+ENV LUCEE_DOWNLOAD https://release.lucee.org/rest/update/provider/loader/
 
 # Lucee server directory
 ENV LUCEE_SERVER ${CATALINA_BASE}/lucee-server
