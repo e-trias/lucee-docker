@@ -1,95 +1,55 @@
-###
-## Build:
-#
-#  if passing LUCEE_VERSION, it must include modifier, e.g. -SNAPSHOT, -RC, if there is one
-#     you can also set the value to CUSTOM and place a Lucee JAR file in resources/catalina-base/lib
-#  if passing LUCEE_EXTENSIONS, the value has to be in double quotes
-#
-#  docker image build \
-#    --build-arg LUCEE_VERSION=5.3.8.133-SNAPSHOT \
-#    --build-arg LUCEE_ADMIN_PASSWORD=changeit \
-#    --build-arg LUCEE_EXTENSIONS="3F9DFF32-B555-449D-B0EB5DB723044045;name=WebSocket" \
-#    -t isapir/lucee-538 .
-#
-#  docker push isapir/lucee-538
-#
-###
-## Run:
-#
-#  HOST_WEBROOT=/work/webroot
-#
-#  docker container run -d --rm -p 8080:8080 --name lucee-8080 \
-#    -v $HOST_WEBROOT:/srv/www/app/webroot \
-#    -e LUCEE_PRESERVE_CASE=true \
-#    -e CATALINA_OPTS="-Xmx4g"
-#    isapir/lucee-538
-#
-###
-## Project home: https://github.com/isapir/lucee-docker
-#
+FROM tomcat:9-jdk11 AS lucee
 
-# Allow to specify the base Tomcat image (must have curl)
-ARG TOMCAT_IMAGE_TAG=9-jdk11
-
-FROM tomcat:$TOMCAT_IMAGE_TAG AS Lucee
-
-
-# Set default LUCEE_VERSION
-#   Override at build time with --build-arg LUCEE_VERSION=5.2.9.38-SNAPSHOT
 ARG LUCEE_VERSION=5.3.10.120
-
-# Allow to specify the Lucee Admin Password at build time with --build-arg LUCEE_ADMIN_PASSWORD=changeit
-ARG LUCEE_ADMIN_PASSWORD=
-
-# Install optional Lucee extensions in the comma separated format {extension-uuid};name=X;label=XY;version=m.n
-#   e.g. "3F9DFF32-B555-449D-B0EB5DB723044045;name=WebSocket"
-ARG LUCEE_EXTENSIONS=
-
-# Pass JVM options when Tomcat starts, e.g. --build-arg CATALINA_OPTS="-Xmx2g"
-ARG CATALINA_OPTS=
-
-# Allow to set a custom webroot directory
-ARG SERVER_WEBROOT=/srv/www/app/webroot
-ARG SERVER_PORT=8080
-
-# Set Target Env for post warmup file copy, default is DEV - files will be copied from resources/target-envs/DEV
 ARG TARGET_ENV=DEV
+ARG SERVER_WEBROOT=/srv/www/app/webroot
 
-ARG DB_HOST=
-ARG DB_PASSWORD=
-ARG DB_PORT=
-ARG DB_USERNAME=
-ARG JDBC_SSL_STRING=
-ARG POSTGRES_DB_ETRIAS=
-ARG POSTGRES_DB_WOONPLAN=
+ARG BASE_DIR
+ARG CATALINA_BASE
+ARG CATALINA_HOME
+ARG CATALINA_OPTS
+ARG DB_HOST
+ARG DB_PASSWORD
+ARG DB_PORT
+ARG DB_USERNAME
+ARG HOST_WOONPLAN
+ARG JDBC_SSL_STRING
+ARG LUCEE_DOWNLOAD
+ARG LUCEE_EXTENSIONS
+ARG LUCEE_SERVER
+ARG POSTGRES_DB_ETRIAS
+ARG POSTGRES_DB_WOONPLAN
+ARG SERVER_PORT
+ARG WEBAPP_BASE
 
+ENV BASE_DIR=/srv/www
+ENV CATALINA_BASE=${BASE_DIR}/catalina-base
+ENV CATALINA_HOME=/usr/local/tomcat
+ENV CATALINA_OPTS=${CATALINA_OPTS}
 ENV DB_HOST=${DB_HOST}
 ENV DB_PASSWORD=${DB_PASSWORD}
 ENV DB_PORT=${DB_PORT}
 ENV DB_USERNAME=${DB_USERNAME}
+ENV HOST_WOONPLAN=${HOST_WOONPLAN}
 ENV JDBC_SSL_STRING=${JDBC_SSL_STRING}
-ENV POSTGRES_DB_WOONPLAN=${POSTGRES_DB_WOONPLAN}
-ENV POSTGRES_DB_ETRIAS=${POSTGRES_DB_ETRIAS}
-
-
+ENV LUCEE_DOWNLOAD=https://release.lucee.org/rest/update/provider/loader/
 ENV LUCEE_EXTENSIONS=${LUCEE_EXTENSIONS}
-ENV SERVER_WEBROOT=${SERVER_WEBROOT}
+ENV LUCEE_SERVER=${CATALINA_BASE}/lucee-server
+ENV POSTGRES_DB_ETRIAS=${POSTGRES_DB_ETRIAS}
+ENV POSTGRES_DB_WOONPLAN=${POSTGRES_DB_WOONPLAN}
 ENV SERVER_PORT=${SERVER_PORT}
-ENV CATALINA_OPTS=${CATALINA_OPTS}
+ENV SERVER_WEBROOT=${SERVER_WEBROOT}
+ENV TARGET_ENV=${TARGET_ENV}
+ENV WEBAPP_BASE=${BASE_DIR}/app
 
-ENV BASE_DIR /srv/www
+# Copy certificates into the build context
+COPY certificates /etc/certs
 
-# Map a host directory for web app, which must have a webroot subdirectory, with
-#   -v <host-directory-app>:${BASE_DIR}/app
-ENV CATALINA_BASE ${BASE_DIR}/catalina-base
-ENV CATALINA_HOME /usr/local/tomcat
-ENV WEBAPP_BASE ${BASE_DIR}/app
-ENV LUCEE_DOWNLOAD https://release.lucee.org/rest/update/provider/loader/
+# Convert PEM to DER
+RUN openssl x509 -outform der -in /etc/certs/${HOST_WOONPLAN}.pem -out /etc/certs/${HOST_WOONPLAN}.der
 
-# Lucee server directory
-ENV LUCEE_SERVER ${CATALINA_BASE}/lucee-server
-
-ENV TARGET_ENV ${TARGET_ENV}
+# import the certificate into the Java trust store
+RUN keytool -import -alias ${HOST_WOONPLAN} -keystore ${JRE_HOME}/lib/security/cacerts -file /etc/certs/${HOST_WOONPLAN}.der -storepass changeit -noprompt
 
 # displays the OS version and Lucee Server path
 # calls makebase.sh and downloads Lucee if the version is not set to CUSTOM
@@ -135,3 +95,4 @@ RUN if [ "$LUCEE_VERSION" \> "5.3.6" ] || [ "$LUCEE_VERSION" == "CUSTOM" ] ; the
 
 # copy additional lucee-server and lucee-web after the warmup completes
 COPY resources/target-envs/${TARGET_ENV} ${CATALINA_BASE}
+
